@@ -1,14 +1,16 @@
 
 // NOTE: You do not need to edit this file.
 
-// NASA's APOD API only has images from June 16, 1995 onwards
+// Dataset contains images starting from June 16, 1995
 const earliestDate = '1995-06-16';
 
-// Get today's date in YYYY-MM-DD format (required by date inputs)
-const today = new Date().toISOString().split('T')[0];
+// Get the latest allowed date for the inputs. Use October 1st of the current year
+// (YYYY-10-01). This clamps the selectable "today" to October 1st as requested.
+const thisYear = new Date().getFullYear();
+const today = new Date(Date.UTC(thisYear, 9, 1)).toISOString().split('T')[0];
 
 function setupDateInputs(startInput, endInput) {
-  // Restrict date selection range from NASA's first image to today
+  // Restrict date selection to the dataset range (earliestDate → today)
   startInput.min = earliestDate;
   startInput.max = today;
   endInput.min = earliestDate;

@@ -5,16 +5,36 @@
   padding: 0;
 }
 
+/* Candidate A — Classic NASA color tokens */
+:root {
+  --bg: #FFFFFF;                /* Background: White */
+  --text-primary: #061F4A;     /* Text Primary: Darkest blue */
+  --header-bg: #105BD8;        /* Header / Navigation: Primary blue */
+  --btn-bg: #DD361C;           /* Button / CTA: Red */
+  --btn-text: #FFFFFF;         /* CTA text: white */
+  --accent: #02BFE7;           /* Accent for hover/illustration: bright blue */
+  --bg-secondary: #AEB0B5;     /* Body secondary background areas: Light gray */
+}
+
 /* Base page styles */
+html, body {
+  height: 100%;
+}
+
 body {
   font-family: Arial, sans-serif;
-  background-color: #f1f1f1;
-  padding: 20px;
+  background-color: var(--bg);
+  /* Keep content anchored to the top and centered horizontally by the container */
+  display: block;
+  padding: 3rem; /* 3rem margin around the viewport so cards/photos don't touch edges */
+  box-sizing: border-box;
 }
 
 /* Centered container */
 .container {
+  /* Center the main content column and keep it in the middle of the page width */
   max-width: 1200px;
+  width: min(1200px, 90%);
   margin: 0 auto;
 }
 
@@ -28,10 +48,17 @@ body {
   margin-bottom: 20px;
 }
 
+/* Header styling uses the primary blue background with white text */
+.site-header {
+  background: var(--header-bg);
+  color: var(--btn-text);
+  border-radius: 6px;
+}
+
 h1 {
   font-family: Verdana, sans-serif;
   font-weight: bold;
-  color: #212121;
+  color: var(--btn-text);
 }
 
 /* Logo */
@@ -66,12 +93,23 @@ button {
 
 /* Button specific */
 button {
-  background-color: #d3d3d3;
-  color: black;
+  background-color: transparent;
+  color: var(--header-bg);
+  border: 1px solid var(--header-bg);
   cursor: pointer;
 }
 button:hover {
-  background-color: #bfbfbf;
+  background-color: rgba(2,191,231,0.06); /* subtle bright-blue accent hover */
+}
+
+/* Primary CTA button */
+#getButton {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border-color: transparent;
+}
+#getButton:hover {
+  filter: brightness(0.95);
 }
 
 /* Stack horizontally on wider screens */
@@ -89,11 +127,256 @@ button:hover {
 
 /* Gallery flex container */
 .gallery {
+  /* keep a padded area inside the centered container */
+  width: 100%;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 20px;
-  padding: 20px;
+  padding: 3rem; /* ensure there is room around photos/cards */
+  box-sizing: border-box;
   justify-content: center;
+  /* prevent gallery content from being cut off: allow internal scrolling if content is tall */
+  max-height: calc(100vh - 6rem);
+  overflow: auto;
+}
+
+/* Make the gallery area a secondary background to contrast cards */
+.gallery {
+  background: rgba(174,176,181,0.06); /* very light touch of secondary gray */
+  border-radius: 8px;
+}
+
+/* Grid and card styles for the script renderer */
+.apod-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 3rem; /* 3rem spacing around cards as requested */
+  width: 100%;
+  align-items: start;
+}
+
+.apod-card {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  box-sizing: border-box;
+  /* Add internal spacing so content isn't cramped */
+  padding: 1rem;
+}
+
+.apod-card img {
+  width: 100%;
+  height: auto;
+  max-height: 40vh; /* prevent images from being taller than viewport */
+  object-fit: cover;
+  display: block;
+}
+
+.apod-card figcaption {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #222;
+}
+
+/* Favorite button */
+.favorite-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 6px 8px;
+  border-radius: 20px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.08s ease, background-color 0.12s ease;
+}
+
+.favorite-btn:hover {
+  transform: scale(1.08);
+  background: rgba(255,255,255,1);
+}
+
+.favorite-btn.favorited {
+  background: #ffebee;
+  border-color: #ff8a80;
+  color: #c62828;
+}
+
+/* Favorites toggle button state */
+.filters button#favoritesToggle.active {
+  background-color: #ffd7d7;
+  border-color: #ff8a80;
+}
+
+/* Device-specific media queries (using viewport width ranges) */
+
+/* iPad Pro (approx range): center content both vertically and horizontally */
+@media (min-width: 768px) and (max-width: 1366px) {
+  /* iPad Pro: top-centered but shifted slightly left */
+  body {
+    display: flex;
+    justify-content: center; /* center horizontally */
+    align-items: flex-start;  /* anchor to top */
+    padding: 3rem;
+  }
+  .container {
+    position: relative;
+    left: 50%;
+  /* center then shift left by 120px (moved further left per request) */
+  transform: translateX(calc(-50% - 120px));
+    max-width: 900px;
+    width: min(900px, 90%);
+  }
+}
+
+/* Surface Pro 7 (approx range): center content */
+@media (min-width: 1200px) and (max-width: 1600px) {
+  /* Surface Pro 7: top-centered but shifted more to the left */
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 3rem;
+  }
+  .container {
+    position: relative;
+    left: 50%;
+    /* center then shift left by 80px (slightly adjusted) */
+    transform: translateX(calc(-50% - 80px));
+    max-width: 1100px;
+    width: min(1100px, 85%);
+  }
+}
+
+/* Nest Hub (approx range): center content for small landscape smart displays */
+@media (min-width: 480px) and (max-width: 800px) {
+  /* Nest Hub: top-centered but shifted slightly left */
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 1.5rem;
+  }
+  .container {
+    position: relative;
+    left: 50%;
+    /* center then shift left by 80px (moved further left per request) */
+    transform: translateX(calc(-50% - 80px));
+    max-width: 600px;
+    width: min(600px, 95%);
+  }
+}
+
+/* Nest Hub Max: larger smart display; shift nav further left per request */
+@media (min-width: 900px) and (max-width: 1100px) {
+  body {
+    display: flex;
+    justify-content: left;
+    align-items: flex-start;
+    padding: 1.5rem;
+  }
+  .container {
+    position: relative;
+    left: 50%;
+    /* center then shift left more for Nest Hub Max */
+    transform: translateX(calc(-50% - 160px));
+    max-width: 800px;
+    width: min(800px, 90%);
+  }
+}
+
+/* Adjusted card sizing rules per device recommendations */
+/* iPhone (~390px wide): 18rem width, 22-26rem height, 1 per row */
+@media (max-width: 420px) {
+  .apod-grid {
+    grid-template-columns: repeat(1, minmax(18rem, 1fr));
+    gap: 1.5rem;
+  }
+  .apod-card {
+    min-height: 22rem;
+    max-height: 26rem;
+  }
+}
+
+/* iPad (~820px): 22-24rem width, 26-30rem height, 2 per row */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .apod-grid {
+    grid-template-columns: repeat(2, minmax(22rem, 1fr));
+    gap: 2.5rem;
+  }
+  .apod-card {
+    min-height: 26rem;
+    max-height: 30rem;
+  }
+}
+
+/* Nest Hub (~1024px): 22rem width, 22-28rem height, 2-3 per row */
+@media (min-width: 900px) and (max-width: 1100px) {
+  .apod-grid {
+    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+    gap: 2.5rem;
+  }
+  .apod-card {
+    min-height: 22rem;
+    max-height: 28rem;
+  }
+}
+
+/* Desktop (>=1280px): 24-26rem width, 28-32rem height, 3-4 per row */
+@media (min-width: 1280px) {
+  .apod-grid {
+    grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+    gap: 3rem;
+  }
+  .apod-card {
+    min-height: 28rem;
+    max-height: 32rem;
+  }
+}
+
+/* Pagination controls styling */
+.pagination {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin: 18px 0 36px 0;
+}
+.pagination button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f3f3f3;
+  cursor: pointer;
+  /* smooth background and transform transitions for hover/click states */
+  transition: background-color 0.12s ease, transform 0.06s ease;
+}
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.pagination button:hover:not(:disabled) {
+  /* slightly darker on hover */
+  background: #e6e6e6;
+}
+.pagination button:active:not(:disabled),
+.pagination button:focus:not(:disabled) {
+  /* darker and subtle pressed effect on click/focus */
+  background: #d9d9d9;
+  transform: translateY(1px);
+  outline: none;
+}
+.pagination select {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
 /* Gallery items */

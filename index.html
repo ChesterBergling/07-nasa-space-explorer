@@ -16,7 +16,15 @@
     <div class="filters">
       <input type="date" id="startDate" />
       <input type="date" id="endDate" />
-      <button>Get Space Images</button>
+      <select id="typeFilter" aria-label="Filter by type">
+        <option value="all">All</option>
+        <option value="nebula">Nebula</option>
+        <option value="galaxy">Galaxy</option>
+        <option value="planet">Planet</option>
+        <option value="star">Star</option>
+      </select>
+      <button type="button" id="favoritesToggle" aria-pressed="false">Favorites</button>
+      <button type="button" id="getButton">Get Space Images</button>
     </div>
 
     <div id="gallery" class="gallery">
@@ -25,6 +33,11 @@
         <p>Select a date range and click "Get Space Images" to explore the cosmos!</p>
       </div>
     </div>
+    <!-- Pagination controls -->
+    <div id="pagination" class="pagination"
+   aria-label="Gallery pagination">
+  <button type="button" id="prevPage" aria-label="Previous page">Previous</button>
+  <button type="button" id="nextPage" aria-label="Next page">Next</button>
   </div>
 
   <script src="js/dateRange.js"></script>
