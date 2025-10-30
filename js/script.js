@@ -51,6 +51,14 @@ if (!startInput || !endInput || !getButton || !gallery) {
 } else {
 	// Call the setup function from dateRange.js to initialize the inputs
 	setupDateInputs(startInput, endInput);
+	// If the type filter is present and set to 'all', clear the auto-populated
+	// date inputs so the user must enter a date range manually. When the
+	// filter is 'all' we also allow fetching all items without dates.
+	if (typeFilter && typeFilter.value === 'all') {
+		startInput.value = '';
+		endInput.value = '';
+		displayStatus('Filter set to "All" — please enter a date range to filter, or click Get to list all items.');
+	}
 }
 
 // --- App state ---
@@ -481,13 +489,22 @@ function renderFilteredGallery() {
 
 // Attach event to the Get button
 getButton.addEventListener('click', async () => {
-	// Basic validation
-	const start = startInput.value;
-	const end = endInput.value;
-	if (!start || !end) {
-		clearElement(gallery);
-		gallery.appendChild(createMessage('Please select both start and end dates.'));
-		return;
+	// Read inputs and decide validation based on type filter
+	const selectedType = (typeFilter && typeFilter.value) || 'all';
+	let start = startInput.value;
+	let end = endInput.value;
+
+	// If the filter is not 'all', require both dates
+	if (selectedType !== 'all') {
+		if (!start || !end) {
+			clearElement(gallery);
+			gallery.appendChild(createMessage('Please select both start and end dates.'));
+			return;
+		}
+	} else {
+		// When filter is 'all' we allow empty dates to mean "no date filter".
+		if (!start) start = undefined;
+		if (!end) end = undefined;
 	}
 
 	// Show loading message
@@ -506,9 +523,30 @@ getButton.addEventListener('click', async () => {
 	}
 });
 
-// Type filter change
+// Type filter change — single handler: adjust date inputs, reset page and re-render
 if (typeFilter) {
-	typeFilter.addEventListener('change', () => renderFilteredGallery());
+	typeFilter.addEventListener('change', () => {
+		const v = typeFilter.value;
+		currentPage = 1;
+		if (v === 'all') {
+			// Clear auto-populated date inputs so the user must enter a range.
+			startInput.value = '';
+			endInput.value = '';
+			displayStatus('Filter set to "All" — enter a date range to filter, or click Get to list all items.');
+		} else {
+			// If the user switches away from 'all' and there are no dates set,
+			// populate the default recent 9-day range so the filter has sensible defaults.
+			if (!startInput.value && !endInput.value) {
+				const thisYear = new Date().getFullYear();
+				const clampToday = new Date(Date.UTC(thisYear, 9, 1)).toISOString().split('T')[0];
+				const lastWeek = new Date();
+				lastWeek.setDate(lastWeek.getDate() - 8);
+				startInput.value = lastWeek.toISOString().split('T')[0];
+				endInput.value = clampToday;
+			}
+		}
+		renderFilteredGallery();
+	});
 }
 
 // Favorites toggle
@@ -523,10 +561,7 @@ if (favoritesToggle) {
 	});
 }
 
-// Reset page when type filter changes
-if (typeFilter) {
-	typeFilter.addEventListener('change', () => { currentPage = 1; renderFilteredGallery(); });
-}
+// (Handled by the unified typeFilter change handler above)
 
 // If static prev/next buttons are present in the DOM, attach handlers that use the same functions
 const staticPrev = document.getElementById('prevPage');
