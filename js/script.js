@@ -377,14 +377,16 @@ function renderFilteredGallery() {
 			return true;
 		});
 
-		// Move any items with broken thumbnails to the end so they appear on later pages
+		// Move any items with broken thumbnails to the front so they occupy page 1
+		// and visible (good) images are pushed to later pages.
 		const goodItems = [];
 		const brokenItems = [];
 		for (const it of filtered) {
 			if (it && it.date && BROKEN_SET.has(it.date)) brokenItems.push(it);
 			else goodItems.push(it);
 		}
-		filtered = goodItems.concat(brokenItems);
+		// Broken items first, then good items
+		filtered = brokenItems.concat(goodItems);
 
 	// Report how many items matched the active filters (useful for debugging)
 	try {
