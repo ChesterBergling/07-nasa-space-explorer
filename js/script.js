@@ -69,6 +69,8 @@ let PAGE_SIZE = 9; // default items per page
 let currentPage = 1;
 const paginationContainer = document.getElementById('pagination');
 let TOTAL_PAGES = 1;
+// Track thumbnails that fail to load so we can push them to later pages
+const BROKEN_SET = new Set(); // store item.date for broken thumbnails
 
 function goToPage(n) {
 	const target = Math.max(1, Math.min(TOTAL_PAGES, n || 1));
@@ -368,11 +370,21 @@ function renderFilteredGallery() {
 	const grid = document.createElement('div');
 	grid.className = 'apod-grid';
 
-		const filtered = uniqueItems.filter((item) => {
-		if (showFavoritesOnly && !isFavorited(item)) return false;
-		if (!matchesType(item, selectedType)) return false;
-		return true;
-	});
+		// Filter according to favorites/type first
+		let filtered = uniqueItems.filter((item) => {
+			if (showFavoritesOnly && !isFavorited(item)) return false;
+			if (!matchesType(item, selectedType)) return false;
+			return true;
+		});
+
+		// Move any items with broken thumbnails to the end so they appear on later pages
+		const goodItems = [];
+		const brokenItems = [];
+		for (const it of filtered) {
+			if (it && it.date && BROKEN_SET.has(it.date)) brokenItems.push(it);
+			else goodItems.push(it);
+		}
+		filtered = goodItems.concat(brokenItems);
 
 	// Report how many items matched the active filters (useful for debugging)
 	try {
@@ -402,11 +414,29 @@ function renderFilteredGallery() {
 		// Thumbnail
 		// Thumbnail — prefer hdurl, then url, then thumbnail_url (some videos provide thumbnail_url)
 		const thumbSrc = item.hdurl || item.url || item.thumbnail_url || '';
-		if (thumbSrc) {
-			const img = document.createElement('img');
-			img.src = thumbSrc;
-			img.alt = item.title || item.date;
-			card.appendChild(img);
+			if (thumbSrc) {
+				const img = document.createElement('img');
+				img.src = thumbSrc;
+				img.alt = item.title || item.date;
+				card.appendChild(img);
+
+				// If the thumbnail fails to load or appears empty, mark this item as broken
+				img.addEventListener('error', () => {
+					if (item && item.date) BROKEN_SET.add(item.date);
+					console.error('Thumbnail failed to load, moving to later page:', img.src);
+					displayStatus(`Thumbnail failed: ${img.src} — moved to later page`, true);
+					// Defer re-render so current event loop completes
+					setTimeout(() => renderFilteredGallery(), 0);
+				});
+
+				img.addEventListener('load', () => {
+					// Some broken images may load with 0 naturalHeight — treat them as broken
+					if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+						if (item && item.date) BROKEN_SET.add(item.date);
+						displayStatus(`Thumbnail appears empty: ${img.src} — moved to later page`, true);
+						setTimeout(() => renderFilteredGallery(), 0);
+					}
+				});
 			// If this is a video, add a small play indicator
 			if (item.media_type === 'video') {
 				const play = document.createElement('div');
