@@ -140,6 +140,11 @@ button:hover {
   overflow: auto;
 }
 
+/* Ensure top images on each page are fully visible */
+.gallery {
+  padding-top: 2rem; /* Add extra padding to prevent top images from being cut off */
+}
+
 /* Make the gallery area a secondary background to contrast cards */
 .gallery {
   background: rgba(174,176,181,0.06); /* very light touch of secondary gray */
@@ -150,9 +155,10 @@ button:hover {
 .apod-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 3rem; /* 3rem spacing around cards as requested */
+  gap: 3px; /* Reduce the gap between cards to bring top and bottom photos closer */
   width: 100%;
   align-items: start;
+  row-gap: 3px; /* Ensure consistent spacing between rows */
 }
 
 .apod-card {
@@ -166,15 +172,34 @@ button:hover {
   cursor: pointer;
   box-sizing: border-box;
   /* Add internal spacing so content isn't cramped */
-  padding: 1rem;
+  padding: 3px;
+  min-height: 50vh; /* Increase the minimum height of the card */
+  margin-top: 0; /* Reset top margin for all cards */
+  margin-bottom: 3px; /* Ensure consistent spacing between cards */
+  transform: scale(0.8); /* Scale down the size of the cards */
+}
+
+.apod-card:first-child {
+  margin-top: 20%; /* Apply 20% margin only to the first card */
 }
 
 .apod-card img {
   width: 100%;
   height: auto;
   max-height: 40vh; /* prevent images from being taller than viewport */
-  object-fit: cover;
+  object-fit: contain; /* Ensure the entire image is visible within its container */
   display: block;
+  margin-top: 1rem; /* Add margin to move the image further down */
+}
+
+/* Move all top cards down by 20% */
+.apod-card:first-child {
+  margin-top: 20%; /* Add margin to push the top card down */
+}
+
+/* Hide video cards */
+.apod-card .video-play-overlay {
+  display: none;
 }
 
 .apod-card figcaption {
@@ -424,4 +449,54 @@ button:hover {
 .placeholder-icon {
   font-size: 48px;
   margin-bottom: 20px;
+}
+
+/* Modal / viewer styles (used by the existing openViewer function in js/script.js)
+   These styles are added without changing JavaScript so the modal appears
+   correctly and accessibly. */
+.apod-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.75);
+  z-index: 9999;
+  padding: 20px;
+}
+
+/* The script creates a plain <div> inside the overlay; style that container here */
+.apod-overlay > div {
+  max-width: 1000px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.apod-overlay img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: 12px;
+  border-radius: 4px;
+}
+
+.apod-overlay button {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f3f3f3;
+}
+.apod-overlay button:hover { background: #e6e6e6; }
+
+/* Small screens: slightly reduce modal padding so it fits better */
+@media (max-width: 520px) {
+  .apod-overlay > div { padding: 12px; max-height: calc(100vh - 32px); }
 }

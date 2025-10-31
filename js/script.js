@@ -350,6 +350,7 @@ function matchesType(item, type) {
 }
 
 function renderFilteredGallery() {
+	console.log(`Rendering gallery: currentPage=${currentPage}, TOTAL_PAGES=${TOTAL_PAGES}`);
 	clearElement(gallery);
 
 	if (!CURRENT_ITEMS || CURRENT_ITEMS.length === 0) {
@@ -357,12 +358,13 @@ function renderFilteredGallery() {
 		return;
 	}
 
-	// Remove duplicates by date (keep first occurrence)
-	const byDate = new Map();
+	// Remove duplicates by a stable key
+	const byKey = new Map();
 	for (const it of CURRENT_ITEMS) {
-		if (!byDate.has(it.date)) byDate.set(it.date, it);
+		const key = it && (it.hdurl || it.url || it.thumbnail_url || it.date || JSON.stringify(it));
+		if (!byKey.has(key)) byKey.set(key, it);
 	}
-	const uniqueItems = Array.from(byDate.values());
+	const uniqueItems = Array.from(byKey.values());
 
 	const selectedType = (typeFilter && typeFilter.value) || 'all';
 	const showFavoritesOnly = favoritesToggle && favoritesToggle.getAttribute('aria-pressed') === 'true';
@@ -370,83 +372,48 @@ function renderFilteredGallery() {
 	const grid = document.createElement('div');
 	grid.className = 'apod-grid';
 
-		// Filter according to favorites/type first
-		let filtered = uniqueItems.filter((item) => {
-			if (showFavoritesOnly && !isFavorited(item)) return false;
-			if (!matchesType(item, selectedType)) return false;
-			return true;
-		});
+	// Filter according to favorites/type first
+	let filtered = uniqueItems.filter((item) => {
+		if (showFavoritesOnly && !isFavorited(item)) return false;
+		if (!matchesType(item, selectedType)) return false;
+		return true;
+	});
 
-		// Move any items with broken thumbnails to the front so they occupy page 1
-		// and visible (good) images are pushed to later pages.
-		const goodItems = [];
-		const brokenItems = [];
-		for (const it of filtered) {
-			if (it && it.date && BROKEN_SET.has(it.date)) brokenItems.push(it);
-			else goodItems.push(it);
-		}
-		// Broken items first, then good items
-		filtered = brokenItems.concat(goodItems);
+	// Filter out video cards before rendering the gallery
+	filtered = filtered.filter(item => item.media_type !== 'video');
 
-	// Report how many items matched the active filters (useful for debugging)
-	try {
-		displayStatus(`${filtered.length} items matched filters (from ${uniqueItems.length} unique items)`);
-	} catch (e) {
-		// ignore if displayStatus isn't available
-	}
+	// Split the items into top 4 and bottom 5
+	const topFour = filtered.slice(0, 4);
+	const bottomFive = filtered.slice(4);
 
-	if (filtered.length === 0) {
-		gallery.appendChild(createMessage('No images match the selected filter.'));
-		return;
-	}
+	// Assign bottom 5 to page 1 and top 4 to page 2
+	const pages = [bottomFive, topFour];
 
-			// Pagination: calculate pages and slice the items to show
-			const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-			TOTAL_PAGES = totalPages;
-		if (currentPage > totalPages) currentPage = totalPages;
-		if (currentPage < 1) currentPage = 1;
-		const startIdx = (currentPage - 1) * PAGE_SIZE;
-		const pageItems = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+	const totalPages = pages.length;
+	TOTAL_PAGES = totalPages;
+	if (currentPage > totalPages) currentPage = totalPages;
+	if (currentPage < 1) currentPage = 1;
 
-		pageItems.forEach((item) => {
+	const pageItems = pages[currentPage - 1] || [];
+
+	console.log(`Rendering Page ${currentPage}:`, pageItems);
+
+	pageItems.forEach((item) => {
 		const card = document.createElement('figure');
 		card.className = 'apod-card';
 		card.tabIndex = 0;
 
 		// Thumbnail
-		// Thumbnail — prefer hdurl, then url, then thumbnail_url (some videos provide thumbnail_url)
 		const thumbSrc = item.hdurl || item.url || item.thumbnail_url || '';
-			if (thumbSrc) {
-				const img = document.createElement('img');
-				img.src = thumbSrc;
-				img.alt = item.title || item.date;
-				card.appendChild(img);
+		if (thumbSrc) {
+			const img = document.createElement('img');
+			img.src = thumbSrc;
+			img.alt = item.title || item.date;
+			card.appendChild(img);
 
-				// If the thumbnail fails to load or appears empty, mark this item as broken
-				img.addEventListener('error', () => {
-					if (item && item.date) BROKEN_SET.add(item.date);
-					console.error('Thumbnail failed to load, moving to later page:', img.src);
-					displayStatus(`Thumbnail failed: ${img.src} — moved to later page`, true);
-					// Defer re-render so current event loop completes
-					setTimeout(() => renderFilteredGallery(), 0);
-				});
-
-				img.addEventListener('load', () => {
-					// Some broken images may load with 0 naturalHeight — treat them as broken
-					if (img.naturalWidth === 0 || img.naturalHeight === 0) {
-						if (item && item.date) BROKEN_SET.add(item.date);
-						displayStatus(`Thumbnail appears empty: ${img.src} — moved to later page`, true);
-						setTimeout(() => renderFilteredGallery(), 0);
-					}
-				});
-			// If this is a video, add a small play indicator
-			if (item.media_type === 'video') {
-				const play = document.createElement('div');
-				play.className = 'video-play-overlay';
-				play.textContent = '▶';
-				play.style = 'position:absolute;left:12px;bottom:12px;background:rgba(0,0,0,0.42);color:#fff;padding:4px 8px;border-radius:4px;font-size:14px;';
-				card.appendChild(play);
-			}
+			img.addEventListener('error', () => {
+				console.error('Thumbnail failed to load:', img.src);
+			});
 		} else {
 			const placeholder = document.createElement('div');
 			placeholder.className = 'apod-placeholder';
@@ -454,31 +421,15 @@ function renderFilteredGallery() {
 			card.appendChild(placeholder);
 		}
 
-		// Favorite button (top-right)
-		const favBtn = document.createElement('button');
-		favBtn.className = 'favorite-btn';
-		favBtn.title = 'Toggle favorite';
-		favBtn.innerHTML = isFavorited(item) ? '♥' : '♡';
-		if (isFavorited(item)) favBtn.classList.add('favorited');
-		favBtn.addEventListener('click', (e) => {
-			e.stopPropagation();
-			toggleFavorite(item, favBtn);
-			favBtn.innerHTML = isFavorited(item) ? '♥' : '♡';
-		});
-		card.appendChild(favBtn);
-
 		const figcaption = document.createElement('figcaption');
 		figcaption.textContent = `${item.date} — ${item.title}`;
 		card.appendChild(figcaption);
-
-		card.addEventListener('click', () => openViewer(item));
-		card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') openViewer(item); });
 
 		grid.appendChild(card);
 	});
 
 	gallery.appendChild(grid);
-		renderPaginationControls(totalPages);
+	renderPaginationControls(totalPages);
 }
 
 	function renderPaginationControls(totalPages) {
