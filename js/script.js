@@ -350,7 +350,7 @@ function matchesType(item, type) {
 }
 
 function renderFilteredGallery() {
-	console.log(`Rendering gallery: currentPage=${currentPage}, TOTAL_PAGES=${TOTAL_PAGES}`);
+	console.log(`Rendering gallery`);
 	clearElement(gallery);
 
 	if (!CURRENT_ITEMS || CURRENT_ITEMS.length === 0) {
@@ -364,7 +364,7 @@ function renderFilteredGallery() {
 		const key = it && (it.hdurl || it.url || it.thumbnail_url || it.date || JSON.stringify(it));
 		if (!byKey.has(key)) byKey.set(key, it);
 	}
-	let uniqueItems = Array.from(byKey.values());
+	const uniqueItems = Array.from(byKey.values());
 
 	const selectedType = (typeFilter && typeFilter.value) || 'all';
 	const showFavoritesOnly = favoritesToggle && favoritesToggle.getAttribute('aria-pressed') === 'true';
@@ -373,40 +373,13 @@ function renderFilteredGallery() {
 	grid.className = 'apod-grid';
 
 	// Filter according to favorites/type first
-	let filtered = uniqueItems.filter((item) => {
+	const filtered = uniqueItems.filter((item) => {
 		if (showFavoritesOnly && !isFavorited(item)) return false;
 		if (!matchesType(item, selectedType)) return false;
 		return true;
 	});
 
-	// Filter out video cards before rendering the gallery
-	filtered = filtered.filter(item => item.media_type !== 'video');
-
-	// Prioritize specific cards
-	const priorityDates = ['2025-09-30', '2025-09-24'];
-	const prioritized = filtered.filter(item => priorityDates.includes(item.date));
-	const others = filtered.filter(item => !priorityDates.includes(item.date));
-
-	// Combine prioritized items at the top
-	filtered = [...prioritized, ...others];
-
-	// Split the items into top 4 and bottom 5
-	const topFour = filtered.slice(0, 4);
-	const bottomFive = filtered.slice(4);
-
-	// Assign bottom 5 to page 1 and top 4 to page 2
-	const pages = [bottomFive, topFour];
-
-	const totalPages = pages.length;
-	TOTAL_PAGES = totalPages;
-	if (currentPage > totalPages) currentPage = totalPages;
-	if (currentPage < 1) currentPage = 1;
-
-	const pageItems = pages[currentPage - 1] || [];
-
-	console.log(`Rendering Page ${currentPage}:`, pageItems);
-
-	pageItems.forEach((item) => {
+	filtered.forEach((item) => {
 		const card = document.createElement('figure');
 		card.className = 'apod-card';
 		card.tabIndex = 0;
@@ -437,46 +410,7 @@ function renderFilteredGallery() {
 	});
 
 	gallery.appendChild(grid);
-	renderPaginationControls(totalPages);
 }
-
-	function renderPaginationControls(totalPages) {
-		if (!paginationContainer) return;
-		clearElement(paginationContainer);
-
-			// Previous button
-			const prev = document.createElement('button');
-			prev.id = 'prevPage';
-			prev.textContent = '← Prev';
-			prev.disabled = currentPage <= 1;
-			prev.addEventListener('click', () => { goPrev(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
-			paginationContainer.appendChild(prev);
-
-		// Page select
-		const select = document.createElement('select');
-		select.setAttribute('aria-label', 'Select page');
-		for (let i = 1; i <= totalPages; i++) {
-			const opt = document.createElement('option');
-			opt.value = i;
-			opt.textContent = `Page ${i} of ${totalPages}`;
-			if (i === currentPage) opt.selected = true;
-			select.appendChild(opt);
-		}
-			select.addEventListener('change', () => {
-				currentPage = Number(select.value);
-				renderFilteredGallery();
-				window.scrollTo({ top: 0, behavior: 'smooth' });
-			});
-		paginationContainer.appendChild(select);
-
-		// Next button
-			const next = document.createElement('button');
-			next.id = 'nextPage';
-			next.textContent = 'Next →';
-			next.disabled = currentPage >= totalPages;
-			next.addEventListener('click', () => { goNext(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
-			paginationContainer.appendChild(next);
-	}
 
 // Attach event to the Get button
 getButton.addEventListener('click', async () => {
