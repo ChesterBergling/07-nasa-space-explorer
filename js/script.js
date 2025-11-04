@@ -364,7 +364,7 @@ function renderFilteredGallery() {
 		const key = it && (it.hdurl || it.url || it.thumbnail_url || it.date || JSON.stringify(it));
 		if (!byKey.has(key)) byKey.set(key, it);
 	}
-	const uniqueItems = Array.from(byKey.values());
+	let uniqueItems = Array.from(byKey.values());
 
 	const selectedType = (typeFilter && typeFilter.value) || 'all';
 	const showFavoritesOnly = favoritesToggle && favoritesToggle.getAttribute('aria-pressed') === 'true';
@@ -381,6 +381,14 @@ function renderFilteredGallery() {
 
 	// Filter out video cards before rendering the gallery
 	filtered = filtered.filter(item => item.media_type !== 'video');
+
+	// Prioritize specific cards
+	const priorityDates = ['2025-09-30', '2025-09-24'];
+	const prioritized = filtered.filter(item => priorityDates.includes(item.date));
+	const others = filtered.filter(item => !priorityDates.includes(item.date));
+
+	// Combine prioritized items at the top
+	filtered = [...prioritized, ...others];
 
 	// Split the items into top 4 and bottom 5
 	const topFour = filtered.slice(0, 4);
@@ -481,7 +489,7 @@ getButton.addEventListener('click', async () => {
 	if (selectedType !== 'all') {
 		if (!start || !end) {
 			clearElement(gallery);
-			gallery.appendChild(createMessage('Please select both start and end dates.'));
+			gallery.appendChild(createMessage('Please select both start and end dates.')); // Enforce date range
 			return;
 		}
 	} else {

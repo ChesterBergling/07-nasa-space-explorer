@@ -174,8 +174,8 @@ button:hover {
   /* Add internal spacing so content isn't cramped */
   padding: 3px;
   min-height: 50vh; /* Increase the minimum height of the card */
-  margin-top: 0; /* Reset top margin for all cards */
-  margin-bottom: 3px; /* Ensure consistent spacing between cards */
+  margin-top: 0; /* Reset top margin */
+  margin-bottom: 0; /* Reset bottom margin */
   transform: scale(0.8); /* Scale down the size of the cards */
 }
 
@@ -185,11 +185,8 @@ button:hover {
 
 .apod-card img {
   width: 100%;
-  height: auto;
-  max-height: 40vh; /* prevent images from being taller than viewport */
-  object-fit: contain; /* Ensure the entire image is visible within its container */
-  display: block;
-  margin-top: 1rem; /* Add margin to move the image further down */
+  height: 100%; /* Ensure the image takes up more space */
+  object-fit: cover; /* Cover the entire card area */
 }
 
 /* Move all top cards down by 20% */
@@ -433,7 +430,7 @@ button:hover {
 }
 
 .gallery-item p {
-  margin-top: 10px;
+  margin-top: 3px;
   padding: 5px;
   font-size: 14px;
 }
