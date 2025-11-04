@@ -363,44 +363,6 @@ button:hover {
   }
 }
 
-/* Pagination controls styling */
-.pagination {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-  margin: 18px 0 36px 0;
-}
-.pagination button {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #f3f3f3;
-  cursor: pointer;
-  /* smooth background and transform transitions for hover/click states */
-  transition: background-color 0.12s ease, transform 0.06s ease;
-}
-.pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.pagination button:hover:not(:disabled) {
-  /* slightly darker on hover */
-  background: #e6e6e6;
-}
-.pagination button:active:not(:disabled),
-.pagination button:focus:not(:disabled) {
-  /* darker and subtle pressed effect on click/focus */
-  background: #d9d9d9;
-  transform: translateY(1px);
-  outline: none;
-}
-.pagination select {
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
 /* Gallery items */
 .gallery-item {
   flex: 1 1 100%;  /* full width by default */
